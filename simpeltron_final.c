@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 /*
 proyecto simulador Simpletron_final
 */
@@ -47,10 +48,81 @@ int errorFatal = 0;
     printf("***tecleara una palabra para esa posicion.Capture ***\n\n");
     printf("***el numero 9999 para terminar de introducir ***\n");
     printf("***su programa ***\n");
+ 
+ 
+ 
+    // Seleccionar la forma de cargar el programa
+    int opcionCarga;
+    FILE *archivo;
+    char nombreArchivo[260];
+
+    printf("\nSeleccione el modo de carga:\n");
+    printf("1. Introducir instrucciones por teclado\n");
+    printf("2. Cargar programa desde archivo SML\n");
+    printf("Opcion: ");
+
+    if (scanf("%d", &opcionCarga) != 1 ||
+        (opcionCarga != 1 && opcionCarga != 2))
+    {
+        printf("***Opcion de carga no valida***\n");
+        return 1;
+    }
+
+    if (opcionCarga == 2)
+    {
+        printf("Nombre del archivo SML: ");
+
+        if (scanf("%259s", nombreArchivo) != 1)
+        {
+            printf("***Nombre de archivo no valido***\n");
+            return 1;
+        }
+
+        archivo = fopen(nombreArchivo, "r");
+
+        if (archivo == NULL)
+        {
+            printf("***Error: no se pudo abrir el archivo***\n");
+            return 1;
+        }
+
+        while (position < 100 && fscanf(archivo, "%d", &instruction) == 1)
+        {
+            if (instruction == 9999)
+            {
+                break;
+            }
+
+            if (instruction < -9999 || instruction > 9998)
+            {
+                printf("***Valor fuera de rango en archivo***\n");
+                fclose(archivo);
+                return 1;
+            }
+
+            memory[position] = instruction;
+            position++;
+        }
+
+        if (!feof(archivo) && ferror(archivo))
+        {
+            printf("***Error al leer el archivo***\n");
+            fclose(archivo);
+            return 1;
+        }
+
+        fclose(archivo);
+
+        printf("***Programa SML cargado desde archivo***\n");
+    }
+   
+    
+    
+    
     
 //---------------------------------------------------------
 //Carga del programa//
-while(position <100)
+while (opcionCarga == 1 && position < 100)
 {
 	printf("%02d ?",position);
 if (scanf("%d", &instruction) != 1)

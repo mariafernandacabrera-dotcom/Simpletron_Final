@@ -53,7 +53,25 @@ int errorFatal = 0;
 while(position <100)
 {
 	printf("%02d ?",position);
-	scanf("%d",&instruction);
+if (scanf("%d", &instruction) != 1)
+{
+    int caracter;
+
+    if (feof(stdin))
+    {
+        printf("***Fin inesperado de la entrada***\n");
+        errorFatal = 1;
+        break;
+    }
+
+    printf("***Error: debe introducir un numero entero***\n");
+
+    while ((caracter = getchar()) != '\n' && caracter != EOF)
+    {
+    }
+
+    continue;
+}
 	
 	if(instruction ==9999)
 	{
@@ -121,51 +139,87 @@ switch(operationCode)
 		break;
 		
 		
-	case 30:
-		accumulator = accumulator + memory[operand];
-		if(accumulator > 9999 || accumulator <-9999)
-		{
-			printf("***Desbordamiento del acumulador***\n");
-			errorFatal =1;
-			running = 0;
-		}
-		break;
+
+case 30:
+{
+    long long resultado = (long long) accumulator + memory[operand];
+
+    if (resultado > 9999 || resultado < -9999)
+    {
+        printf("***Desbordamiento del acumulador***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        accumulator = (int) resultado;
+    }
+    break;
+}
+
 		
-	case 31:
-		accumulator = accumulator - memory[operand];
-		if(accumulator >9999 || accumulator <-9999)
-		{
-			printf("***Desbordamiento del acumulado***\n");
-			errorFatal = 1;
-			running = 0;
-		}
-		break;
-		
-	case 32:
-		if(memory[operand]==0)
-		{
-			printf("***No se puede dividir entre cero***\n");
-			errorFatal = 1;
-			running = 0;
-			
-		}
-		else
-		{
-			accumulator = accumulator / memory[operand];
-			
-		}
-		break;
-		
-		
-	case 33:
-			accumulator = accumulator * memory[operand];
-			if(accumulator >9999 || accumulator <-9999 )
-			{
-				printf("***Desbordamiento del acumulador***\n");
-				errorFatal = 1;
-				running = 0;
-			}
-			break;
+
+case 31:
+{
+    long long resultado = (long long) accumulator - memory[operand];
+
+    if (resultado > 9999 || resultado < -9999)
+    {
+        printf("***Desbordamiento del acumulador***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        accumulator = (int) resultado;
+    }
+    break;
+}
+
+
+case 32: // DIVIDE
+{
+    if (memory[operand] == 0)
+    {
+        printf("***No se puede dividir entre cero***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        long long resultado = (long long) accumulator / memory[operand];
+
+        if (resultado > 9999 || resultado < -9999)
+        {
+            printf("***Desbordamiento del acumulador***\n");
+            errorFatal = 1;
+            running = 0;
+        }
+        else
+        {
+            accumulator = (int) resultado;
+        }
+    }
+    break;
+}
+
+case 33: // MULTIPLY
+{
+    long long resultado = (long long) accumulator * memory[operand];
+
+    if (resultado > 9999 || resultado < -9999)
+    {
+        printf("***Desbordamiento del acumulador***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        accumulator = (int) resultado;
+    }
+    break;
+}
+
 			
 	
 	case 40:
@@ -237,7 +291,7 @@ for(i=0;i<100;i++)
 	{
 		printf("%d",i/10);
 	}
-	printf("%+05d", memory[i]);
+	printf(" %+05d", memory[i]);
 	
 	//cambio de renglon 
 	if((i+1)%10 ==0)

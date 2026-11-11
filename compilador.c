@@ -4,13 +4,11 @@
 #include <string.h>
 #include <ctype.h>
 
-
 #define EXPRESIONES_COMO_MODULO
 #include "Expresiones.c"
 
 /*
    Proyecto final Simpletron
-  
 */
 
 #define MEMORIA 100
@@ -21,10 +19,19 @@
 int memoria[MEMORIA];
 int codigo = 0;
 int datos = MEMORIA - 1;
-int variables[26];
-int constantes[200];
-int direcciones[200];
-int cantidadConstantes = 0;
+
+// Tabla de simbolos unificada: variables (V) y constantes (C)
+typedef struct
+{
+    char simbolo;       // letra de variable o ' ' para constantes
+    char tipo;          // V: variable; C: constante
+    int valor;          // valor de la constante
+    int direccion;      // direccion reservada en memoria
+} Simbolo;
+
+Simbolo tablaSimbolos[250];
+int cantidadSimbolos = 0;
+
 int lineas[MAX_LINEAS];
 char programas[MAX_LINEAS][MAX_TEXTO];
 int cantidadLineas = 0;
@@ -68,12 +75,12 @@ int reservarTemporal(void)
 {
     int direccion;
 
-    if (cantidadLibres > 0)
+    if(cantidadLibres > 0)
         direccion = libres[--cantidadLibres];
     else
         direccion = reservarDato();
 
-    if (!error)
+    if(!error)
         temporales[cantidadTemporales++] = direccion;
 
     return direccion;
@@ -83,7 +90,7 @@ void liberarTemporales(void)
 {
     int i;
 
-    for (i = 0; i < cantidadTemporales; i++)
+    for(i = 0; i < cantidadTemporales; i++)
         libres[cantidadLibres++] = temporales[i];
 
     cantidadTemporales = 0;
@@ -92,13 +99,16 @@ void liberarTemporales(void)
 int emitir(int operacion, int direccion)
 {
     int posicion;
+
     if(error) return -1;
+
     if(codigo > datos || codigo >= MEMORIA ||
        direccion < 0 || direccion >= MEMORIA)
     {
         mostrarError("El programa excede las 100 posiciones de memoria.");
         return -1;
     }
+
     posicion = codigo++;
     memoria[posicion] = operacion * 100 + direccion;
     return posicion;
@@ -106,53 +116,85 @@ int emitir(int operacion, int direccion)
 
 int obtenerVariable(char letra)
 {
-    int indice;
+    int i, direccion;
+
     if(letra < 'a' || letra > 'z')
     {
         mostrarError("Las variables deben tener una sola letra minuscula.");
         return 0;
     }
-    indice = letra - 'a';
-    if(variables[indice] == -1)
-        variables[indice] = reservarDato();
-    return variables[indice];
+
+    for(i = 0; i < cantidadSimbolos; i++)
+    {
+        if(tablaSimbolos[i].tipo == 'V' &&
+           tablaSimbolos[i].simbolo == letra)
+            return tablaSimbolos[i].direccion;
+    }
+
+    if(cantidadSimbolos >= 250)
+    {
+        mostrarError("Tabla de simbolos llena.");
+        return 0;
+    }
+
+    direccion = reservarDato();
+
+    if(error) return 0;
+
+    tablaSimbolos[cantidadSimbolos].simbolo = letra;
+    tablaSimbolos[cantidadSimbolos].tipo = 'V';
+    tablaSimbolos[cantidadSimbolos].valor = 0;
+    tablaSimbolos[cantidadSimbolos++].direccion = direccion;
+
+    return direccion;
 }
 
 int obtenerConstante(int valor)
 {
     int i, direccion;
+
     if(valor < -9999 || valor > 9998)
     {
         mostrarError("Constante fuera del rango permitido.");
         return 0;
     }
-    for(i = 0; i < cantidadConstantes; i++)
-        if(constantes[i] == valor) return direcciones[i];
 
-    if(cantidadConstantes >= 200)
+    for(i = 0; i < cantidadSimbolos; i++)
     {
-        mostrarError("Demasiadas constantes.");
+        if(tablaSimbolos[i].tipo == 'C' &&
+           tablaSimbolos[i].valor == valor)
+            return tablaSimbolos[i].direccion;
+    }
+
+    if(cantidadSimbolos >= 250)
+    {
+        mostrarError("Tabla de simbolos llena.");
         return 0;
     }
 
     direccion = reservarDato();
-    if(!error)
-    {
-        constantes[cantidadConstantes] = valor;
-        direcciones[cantidadConstantes++] = direccion;
-        memoria[direccion] = valor;
-    }
+
+    if(error) return 0;
+
+    tablaSimbolos[cantidadSimbolos].simbolo = ' ';
+    tablaSimbolos[cantidadSimbolos].tipo = 'C';
+    tablaSimbolos[cantidadSimbolos].valor = valor;
+    tablaSimbolos[cantidadSimbolos++].direccion = direccion;
+
+    memoria[direccion] = valor;
     return direccion;
 }
 
 void agregarSalto(int posicion, int linea)
 {
     if(error) return;
+
     if(cantidadSaltos >= 400)
     {
         mostrarError("Demasiados saltos.");
         return;
     }
+
     saltos[cantidadSaltos] = posicion;
     destinos[cantidadSaltos++] = linea;
 }
@@ -166,6 +208,7 @@ void expresionPrimaria(void)
 {
     int valor = 0, direccion;
     char letra;
+
     espacios(&expresion);
 
     if(*expresion == '(')
@@ -173,33 +216,39 @@ void expresionPrimaria(void)
         expresion++;
         expresionSuma();
         espacios(&expresion);
+
         if(*expresion != ')')
             mostrarError("Falta cerrar parentesis.");
-        else expresion++;
+        else
+            expresion++;
     }
     else if(isdigit((unsigned char)*expresion))
     {
         while(isdigit((unsigned char)*expresion))
         {
             valor = valor * 10 + (*expresion++ - '0');
+
             if(valor > 9998)
             {
                 mostrarError("Constante demasiado grande.");
                 return;
             }
         }
+
         direccion = obtenerConstante(valor);
         emitir(20, direccion);
     }
     else if(*expresion >= 'a' && *expresion <= 'z')
     {
         letra = *expresion++;
+
         if(isalpha((unsigned char)*expresion) ||
            isdigit((unsigned char)*expresion))
         {
             mostrarError("Las variables deben tener una sola letra.");
             return;
         }
+
         direccion = obtenerVariable(letra);
         emitir(20, direccion);
     }
@@ -210,6 +259,7 @@ void expresionPrimaria(void)
 void expresionUnaria(void)
 {
     int cero, temporal;
+
     espacios(&expresion);
 
     if(*expresion == '+')
@@ -221,19 +271,24 @@ void expresionUnaria(void)
     {
         expresion++;
         expresionUnaria();
+
         if(error) return;
+
         temporal = reservarTemporal();
         emitir(21, temporal);
+
         cero = obtenerConstante(0);
         emitir(20, cero);
         emitir(31, temporal);
     }
-    else expresionPrimaria();
+    else
+        expresionPrimaria();
 }
 
 void expresionPotencia(void)
 {
     int izquierdo, derecho;
+
     espacios(&expresion);
     expresionUnaria();
     espacios(&expresion);
@@ -243,7 +298,9 @@ void expresionPotencia(void)
         expresion++;
         izquierdo = reservarTemporal();
         emitir(21, izquierdo);
+
         expresionPotencia();
+
         derecho = reservarTemporal();
         emitir(21, derecho);
         emitir(20, izquierdo);
@@ -255,19 +312,25 @@ void expresionProducto(void)
 {
     char operador;
     int izquierdo, derecho;
+
     expresionPotencia();
     espacios(&expresion);
 
     while((*expresion == '*' || *expresion == '/') && !error)
     {
         operador = *expresion++;
+
         izquierdo = reservarTemporal();
         emitir(21, izquierdo);
+
         expresionPotencia();
+
         derecho = reservarTemporal();
         emitir(21, derecho);
+
         emitir(20, izquierdo);
         emitir(operador == '*' ? 33 : 32, derecho);
+
         espacios(&expresion);
     }
 }
@@ -276,19 +339,25 @@ void expresionSuma(void)
 {
     char operador;
     int izquierdo, derecho;
+
     expresionProducto();
     espacios(&expresion);
 
     while((*expresion == '+' || *expresion == '-') && !error)
     {
         operador = *expresion++;
+
         izquierdo = reservarTemporal();
         emitir(21, izquierdo);
+
         expresionProducto();
+
         derecho = reservarTemporal();
         emitir(21, derecho);
+
         emitir(20, izquierdo);
         emitir(operador == '+' ? 30 : 31, derecho);
+
         espacios(&expresion);
     }
 }
@@ -421,6 +490,7 @@ void traducirExpresion(const char *texto)
 int leerNumero(const char **p, int *numero)
 {
     int valor = 0;
+
     espacios(p);
 
     if(!isdigit((unsigned char)**p))
@@ -439,6 +509,7 @@ int leerNumero(const char **p, int *numero)
 int palabra(const char **p, const char *buscada)
 {
     size_t n = strlen(buscada);
+
     espacios(p);
 
     if(strncmp(*p, buscada, n) != 0)
@@ -768,8 +839,7 @@ int compilar(const char *origen, const char *salida)
     int direccionesLinea[MAX_LINEAS];
     FILE *archivo;
 
-    for(i = 0; i < 26; i++)
-        variables[i] = -1;
+    cantidadSimbolos = 0;
 
     if(!leerPrograma(origen))
         return 0;
@@ -853,7 +923,6 @@ int main(void)
     char origen[260], salida[260];
 
     printf("----- COMPILADOR SIMPLE A SML -----\n\n");
-
     printf("Archivo de entrada (.simple): ");
 
     if(scanf("%259s",origen) != 1)
@@ -871,6 +940,5 @@ int main(void)
     }
 
     printf("----- FIN DEL COMPILADOR -----\n");
-
     return 0;
 }

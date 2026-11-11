@@ -1,0 +1,19 @@
+PRUEBA DE DIVISION ENTRE CERO - SIMPLETRON
+
+Archivo de entrada: prueba_division_cero.simple
+Archivo generado: prueba_division_cero.sml
+
+Operacion: 10 / 0
+
+Resultado esperado:
+Error de division entre cero.
+
+Resultado obtenido:
+***No se puede dividir entre cero***
+***La ejecucion de Simpletron termino anormalmente
+
+Instruccion detectada: 3293
+Codigo de operacion: 32
+
+Estado de la prueba: CORRECTA
+El simulador detecto el error y detuvo la ejecucion.

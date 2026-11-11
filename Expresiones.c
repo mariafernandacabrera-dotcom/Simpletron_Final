@@ -96,6 +96,16 @@ int convertir(char expresion[], char postfija[])
             esperaNumero = 0;
             continue;
         }
+        if (c >= 'a' && c <= 'z')
+        {
+            if (!esperaNumero || j >= TAM - 3) return 0;
+            if (isalnum((unsigned char)expresion[i+1]) || expresion[i+1] == '_') return 0;
+            postfija[j++] = c;
+            postfija[j++] = ' ';
+            esperaNumero = 0;
+            i++;
+            continue;
+        }
         if (abre(c))
         {
             if (!esperaNumero || tope >= TAM - 1) return 0;
@@ -221,6 +231,7 @@ int calcular(char postfija[], long long *resultado)
 // Programa principal
 //--------------------------------------
 
+#ifndef EXPRESIONES_COMO_MODULO
 int main(void)
 {
     char expresion[TAM], postfija[TAM];
@@ -253,3 +264,5 @@ int main(void)
     printf("\n----- FIN DEL PROGRAMA -----\n");
     return 0;
 }
+
+#endif // EXPRESIONES_COMO_MODULO

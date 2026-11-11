@@ -1,0 +1,19 @@
+PRUEBA DE CICLO - SIMPLETRON
+
+Archivo de entrada: prueba_ciclo.simple
+Archivo generado: prueba_ciclo.sml
+
+Operacion: Suma de los numeros del 1 al 5.
+
+Resultado esperado: 15
+Resultado obtenido: 15
+
+COMPILADOR:
+Compilacion correcta. Instrucciones: 28. Datos desde: 93.
+Archivo generado: prueba_ciclo.sml
+
+SIMULADOR:
+97 => 15
+***Termino la ejecucion de Simpletron***
+
+Estado de la prueba: CORRECTA

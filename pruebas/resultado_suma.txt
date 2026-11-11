@@ -1,0 +1,22 @@
+PRUEBA DE COMPILACION Y EJECUCION - SIMPLETRON
+
+Archivo de entrada: prueba_suma.simple
+Archivo generado: prueba_suma.sml
+
+Operaciones:
+a = 4
+b = 7
+c = a + b
+
+Resultado esperado: 11
+Resultado obtenido: 11
+
+COMPILADOR:
+Compilacion correcta. Instrucciones: 13. Datos desde: 93.
+Archivo generado: prueba_suma.sml
+
+SIMULADOR:
+95 => 11
+***Termino la ejecucion de Simpletron***
+
+Estado de la prueba: CORRECTA

@@ -416,7 +416,70 @@ case 35: // POWER: potencia entera
 case 50: // NEWLINE: salto de linea
     printf("\n");
     break;
-			
+	
+	case 51: // WRITE STRING: mostrar cadena
+{
+    int posicion = operand;
+
+    while(posicion < 100 && memory[posicion] != 0)
+    {
+        if(memory[posicion] < 32 || memory[posicion] > 126)
+        {
+            printf("***Caracter no valido en la cadena***\n");
+            errorFatal = 1;
+            running = 0;
+            break;
+        }
+
+        printf("%c", memory[posicion]);
+        posicion++;
+    }
+
+    break;
+}
+
+case 52: // READ STRING: leer cadena
+{
+    int posicion = operand;
+    int caracter;
+
+    printf("Introduzca una cadena: ");
+
+    // Ignorar el salto de linea pendiente, si existe
+    do
+    {
+        caracter = getchar();
+    }
+    while(caracter == '\n' || caracter == '\r');
+
+    while(caracter != '\n' && caracter != EOF)
+    {
+        if(posicion >= 99 || caracter < 32 || caracter > 126)
+        {
+            printf("***Cadena demasiado larga o caracter no valido***\n");
+            errorFatal = 1;
+            running = 0;
+            break;
+        }
+
+        memory[posicion++] = caracter;
+        caracter = getchar();
+    }
+
+    if(running == 1)
+    {
+        if(caracter == EOF && posicion == operand)
+        {
+            printf("***Error al leer la cadena***\n");
+            errorFatal = 1;
+            running = 0;
+        }
+        else
+            memory[posicion] = 0;
+    }
+
+    break;
+}		
 	
 	case 40:
 		instructionCounter = operand;

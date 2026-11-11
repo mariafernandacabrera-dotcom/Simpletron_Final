@@ -1,0 +1,5 @@
+10 let a = 10
+20 let b = 0
+30 let c = a / b
+40 print c
+50 end

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 /*
 proyecto simulador Simpletron_final
 */
@@ -47,13 +48,128 @@ int errorFatal = 0;
     printf("***tecleara una palabra para esa posicion.Capture ***\n\n");
     printf("***el numero 9999 para terminar de introducir ***\n");
     printf("***su programa ***\n");
+ 
+ 
+ 
+    // Seleccionar la forma de cargar el programa
+    int opcionCarga;
+    FILE *archivo;
+    char nombreArchivo[260];
+
+    printf("\nSeleccione el modo de carga:\n");
+    printf("1. Introducir instrucciones por teclado\n");
+    printf("2. Cargar programa desde archivo SML\n");
+    printf("Opcion: ");
+
+    if (scanf("%d", &opcionCarga) != 1 ||
+        (opcionCarga != 1 && opcionCarga != 2))
+    {
+        printf("***Opcion de carga no valida***\n");
+        return 1;
+    }
+
+    if (opcionCarga == 2)
+    {
+        printf("Nombre del archivo SML: ");
+
+        if (scanf("%259s", nombreArchivo) != 1)
+        {
+            printf("***Nombre de archivo no valido***\n");
+            return 1;
+        }
+
+        archivo = fopen(nombreArchivo, "r");
+
+        if (archivo == NULL)
+        {
+            printf("***Error: no se pudo abrir el archivo***\n");
+            return 1;
+        }
+
+        
+    //Carga de instrucciones desde archivo
+    int lectura;
+    int finPrograma = 0;
+
+    while (position < 100)
+    {
+        lectura = fscanf(archivo, "%d", &instruction);
+
+        if (lectura != 1)
+        {
+            if (feof(archivo))
+                break;
+
+            printf("***Error: el archivo contiene datos no validos***\n");
+            fclose(archivo);
+            return 1;
+        }
+
+        if (instruction == 9999)
+        {
+            finPrograma = 1;
+            break;
+        }
+
+        if (instruction < -9999 || instruction > 9998)
+        {
+            printf("***Valor fuera de rango en archivo***\n");
+            fclose(archivo);
+            return 1;
+        }
+
+        memory[position] = instruction;
+        position++;
+    }
+
+    if (!finPrograma && position < 100)
+    {
+        printf("***Error: falta el numero 9999 en el archivo***\n");
+        fclose(archivo);
+        return 1;
+    }
+
+
+        if (!feof(archivo) && ferror(archivo))
+        {
+            printf("***Error al leer el archivo***\n");
+            fclose(archivo);
+            return 1;
+        }
+
+        fclose(archivo);
+
+        printf("***Programa SML cargado desde archivo***\n");
+    }
+   
+    
+    
+    
     
 //---------------------------------------------------------
 //Carga del programa//
-while(position <100)
+while (opcionCarga == 1 && position < 100)
 {
 	printf("%02d ?",position);
-	scanf("%d",&instruction);
+if (scanf("%d", &instruction) != 1)
+{
+    int caracter;
+
+    if (feof(stdin))
+    {
+        printf("***Fin inesperado de la entrada***\n");
+        errorFatal = 1;
+        break;
+    }
+
+    printf("***Error: debe introducir un numero entero***\n");
+
+    while ((caracter = getchar()) != '\n' && caracter != EOF)
+    {
+    }
+
+    continue;
+}
 	
 	if(instruction ==9999)
 	{
@@ -70,6 +186,13 @@ while(position <100)
 	}
 	
 }//fin del while 
+
+if (errorFatal == 1)
+{
+    printf("***Error al cargar el programa***\n");
+    return 1;
+}
+
     
     printf("\n***Se termino de cargar el programa***\n");
 //-------------------------------------------------------
@@ -96,17 +219,54 @@ while(position <100)
 //------------------------------------
 switch(operationCode)
 {
-	case 10:
-	    printf("Teclee un entero");
-	        scanf("%d",&value);
-	        while(value <-9999 || value > 9998)
-	        {
-	        	printf("***Valor fuera de rango***\n");
-	        	printf("Teclee un Entero");
-	        	scanf("%d",&value);
-			}
-	           memory[operand] = value;
-	break;
+
+case 10:
+{
+    int lectura;
+    int caracter;
+
+    printf("Teclee un entero: ");
+    lectura = scanf("%d", &value);
+
+    if (lectura != 1)
+    {
+        printf("***Error: entrada no valida***\n");
+        errorFatal = 1;
+        running = 0;
+
+        if (lectura == 0)
+        {
+            while ((caracter = getchar()) != '\n' &&
+                   caracter != EOF)
+            {
+            }
+        }
+        break;
+    }
+
+    while (value < -9999 || value > 9998)
+    {
+        printf("***Valor fuera de rango***\n");
+        printf("Teclee un entero: ");
+
+        lectura = scanf("%d", &value);
+
+        if (lectura != 1)
+        {
+            printf("***Error: entrada no valida***\n");
+            errorFatal = 1;
+            running = 0;
+            break;
+        }
+    }
+
+    if (running == 1)
+    {
+        memory[operand] = value;
+    }
+    break;
+}
+
 	
 	case 11:
 		printf("%02d => %d\n",operand,memory[operand]);
@@ -121,51 +281,141 @@ switch(operationCode)
 		break;
 		
 		
-	case 30:
-		accumulator = accumulator + memory[operand];
-		if(accumulator > 9999 || accumulator <-9999)
-		{
-			printf("***Desbordamiento del acumulador***\n");
-			errorFatal =1;
-			running = 0;
-		}
-		break;
+
+case 30:
+{
+    long long resultado = (long long) accumulator + memory[operand];
+
+    if (resultado > 9999 || resultado < -9999)
+    {
+        printf("***Desbordamiento del acumulador***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        accumulator = (int) resultado;
+    }
+    break;
+}
+
 		
-	case 31:
-		accumulator = accumulator - memory[operand];
-		if(accumulator >9999 || accumulator <-9999)
-		{
-			printf("***Desbordamiento del acumulado***\n");
-			errorFatal = 1;
-			running = 0;
-		}
-		break;
-		
-	case 32:
-		if(memory[operand]==0)
-		{
-			printf("***No se puede dividir entre cero***\n");
-			errorFatal = 1;
-			running = 0;
-			
-		}
-		else
-		{
-			accumulator = accumulator / memory[operand];
-			
-		}
-		break;
-		
-		
-	case 33:
-			accumulator = accumulator * memory[operand];
-			if(accumulator >9999 || accumulator <-9999 )
-			{
-				printf("***Desbordamiento del acumulador***\n");
-				errorFatal = 1;
-				running = 0;
-			}
-			break;
+
+case 31:
+{
+    long long resultado = (long long) accumulator - memory[operand];
+
+    if (resultado > 9999 || resultado < -9999)
+    {
+        printf("***Desbordamiento del acumulador***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        accumulator = (int) resultado;
+    }
+    break;
+}
+
+
+case 32: // DIVIDE
+{
+    if (memory[operand] == 0)
+    {
+        printf("***No se puede dividir entre cero***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        long long resultado = (long long) accumulator / memory[operand];
+
+        if (resultado > 9999 || resultado < -9999)
+        {
+            printf("***Desbordamiento del acumulador***\n");
+            errorFatal = 1;
+            running = 0;
+        }
+        else
+        {
+            accumulator = (int) resultado;
+        }
+    }
+    break;
+}
+
+case 33: // MULTIPLY
+{
+    long long resultado = (long long) accumulator * memory[operand];
+
+    if (resultado > 9999 || resultado < -9999)
+    {
+        printf("***Desbordamiento del acumulador***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        accumulator = (int) resultado;
+    }
+    break;
+}
+
+
+case 34: // MOD: residuo de division
+{
+    if (memory[operand] == 0)
+    {
+        printf("***No se puede calcular modulo entre cero***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        accumulator = accumulator % memory[operand];
+    }
+    break;
+}
+
+case 35: // POWER: potencia entera
+{
+    int exponente = memory[operand];
+    long long resultado = 1;
+    int i;
+
+    if (exponente < 0)
+    {
+        printf("***Exponente negativo no admitido***\n");
+        errorFatal = 1;
+        running = 0;
+    }
+    else
+    {
+        for (i = 0; i < exponente; i++)
+        {
+            resultado = resultado * accumulator;
+
+            if (resultado > 9999 || resultado < -9999)
+            {
+                printf("***Desbordamiento del acumulador***\n");
+                errorFatal = 1;
+                running = 0;
+                break;
+            }
+        }
+
+        if (running == 1)
+        {
+            accumulator = (int) resultado;
+        }
+    }
+    break;
+}
+
+case 50: // NEWLINE: salto de linea
+    printf("\n");
+    break;
 			
 	
 	case 40:
@@ -237,7 +487,7 @@ for(i=0;i<100;i++)
 	{
 		printf("%d",i/10);
 	}
-	printf("%+05d", memory[i]);
+	printf(" %+05d", memory[i]);
 	
 	//cambio de renglon 
 	if((i+1)%10 ==0)
